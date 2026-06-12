@@ -244,7 +244,7 @@
             <h2>Student View</h2>
             <p>Select class, current category, and name. Then answer the test privately.</p>
           </div>
-          <div class="big-card" onclick="showTeacher()">
+          <div class="big-card" onclick="showTeacherGate()">
             <h2>Teacher View</h2>
             <p>Project the live dashboard. It shows names, progress, percentage scores, and final grouping.</p>
           </div>
@@ -615,6 +615,15 @@ async function saveStudentProgress(){
 /*************************************************************
   TEACHER DASHBOARD
 *************************************************************/
+const TEACHER_PASSCODE = "DELTA2026";
+function showTeacherGate(){
+  const code = prompt("Enter teacher passcode:");
+  if(code === TEACHER_PASSCODE){
+    showTeacher();
+  } else if(code !== null){
+    alert("Incorrect passcode. Teacher View is locked.");
+  }
+}
 function showTeacher(){
   showScreen('teacherScreen');
   currentTeacherClass = document.getElementById('teacherClassSelect').value || "Grade 6A";
