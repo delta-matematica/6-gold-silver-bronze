@@ -1,0 +1,826 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Level Up Math: Gold Silver Bronze Live Test</title>
+
+  <!-- Firebase SDKs: paste your Firebase config in the firebaseConfig object below. -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore-compat.js"></script>
+
+  <style>
+    :root{
+      --navy:#07172f;
+      --navy2:#0b2447;
+      --navy3:#102f5d;
+      --panel:rgba(255,255,255,.10);
+      --panel2:rgba(255,255,255,.16);
+      --line:rgba(255,255,255,.22);
+      --white:#f8fbff;
+      --muted:#b9c8e6;
+      --gold:#f7c843;
+      --silver:#cbd5e1;
+      --bronze:#d58a45;
+      --green:#29d391;
+      --red:#ff667d;
+      --blue:#6bb7ff;
+      --orange:#ffb35c;
+      --shadow:0 24px 70px rgba(0,0,0,.35);
+      --radius:24px;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      min-height:100vh;
+      font-family: Inter, Segoe UI, Arial, sans-serif;
+      color:var(--white);
+      background:
+        radial-gradient(circle at top left, rgba(82,150,255,.30), transparent 35%),
+        radial-gradient(circle at bottom right, rgba(247,200,67,.14), transparent 34%),
+        linear-gradient(135deg,var(--navy),var(--navy2) 45%, #061126);
+      overflow:hidden;
+    }
+    button, select, input{font:inherit}
+    .app{
+      width:100vw;
+      height:100vh;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:24px;
+    }
+    .screen{
+      display:none;
+      width:min(1400px, 100%);
+      height:min(850px, calc(100vh - 48px));
+      background:linear-gradient(180deg, rgba(255,255,255,.12), rgba(255,255,255,.06));
+      border:1px solid var(--line);
+      border-radius:32px;
+      box-shadow:var(--shadow);
+      overflow:hidden;
+      position:relative;
+    }
+    .screen.active{display:block}
+    .topbar{
+      height:86px;
+      padding:18px 28px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      border-bottom:1px solid var(--line);
+      background:rgba(3,10,24,.28);
+    }
+    .brand{display:flex; gap:16px; align-items:center}
+    .logo{
+      width:52px;height:52px;border-radius:16px;
+      background:conic-gradient(from 180deg, var(--gold), var(--silver), var(--bronze), var(--gold));
+      display:grid;place-items:center;color:#07172f;font-weight:1000;font-size:24px;
+      box-shadow:0 10px 25px rgba(0,0,0,.25);
+    }
+    h1,h2,h3,p{margin:0}
+    .brand h1{font-size:28px; letter-spacing:.3px}
+    .brand p{font-size:14px;color:var(--muted); margin-top:3px}
+    .small-pill{
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.10);
+      padding:10px 14px;
+      border-radius:999px;
+      color:var(--muted);
+      font-weight:700;
+    }
+    .content{height:calc(100% - 86px); padding:28px; overflow:auto}
+    .center-content{display:grid; place-items:center; height:calc(100% - 86px); padding:34px}
+    .hero{
+      width:min(950px, 100%);
+      text-align:center;
+      padding:42px;
+      border:1px solid var(--line);
+      border-radius:32px;
+      background:rgba(255,255,255,.09);
+      box-shadow:0 20px 60px rgba(0,0,0,.25);
+    }
+    .hero-title{font-size:58px; line-height:1.02; font-weight:1000; letter-spacing:-1.5px}
+    .hero-title span:nth-child(1){color:var(--gold)}
+    .hero-title span:nth-child(2){color:var(--silver)}
+    .hero-title span:nth-child(3){color:var(--bronze)}
+    .hero-sub{margin:18px auto 30px; max-width:760px; color:#d9e7ff; font-size:20px; line-height:1.5}
+    .mode-grid{display:grid; grid-template-columns:1fr 1fr; gap:18px; margin-top:26px}
+    .big-card{
+      border:1px solid var(--line);
+      border-radius:24px;
+      background:rgba(255,255,255,.10);
+      padding:26px;
+      cursor:pointer;
+      transition:.2s ease;
+      min-height:178px;
+      text-align:left;
+    }
+    .big-card:hover{transform:translateY(-3px); background:rgba(255,255,255,.15)}
+    .big-card h2{font-size:30px; margin-bottom:10px}
+    .big-card p{color:var(--muted); font-size:17px; line-height:1.45}
+    .btn-row{display:flex; gap:12px; flex-wrap:wrap; align-items:center}
+    .btn{
+      border:0;
+      border-radius:15px;
+      padding:14px 20px;
+      font-weight:900;
+      color:#07172f;
+      background:linear-gradient(180deg,#fff,#dceaff);
+      cursor:pointer;
+      box-shadow:0 10px 24px rgba(0,0,0,.22);
+    }
+    .btn:hover{filter:brightness(1.05); transform:translateY(-1px)}
+    .btn.primary{background:linear-gradient(180deg,#ffe584,#f7c843)}
+    .btn.secondary{background:rgba(255,255,255,.14); color:var(--white); border:1px solid var(--line); box-shadow:none}
+    .btn.danger{background:linear-gradient(180deg,#ff8b9b,#ff5670); color:#fff}
+    .btn:disabled{opacity:.45; cursor:not-allowed; transform:none}
+    .form-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:18px; width:min(1120px,100%)}
+    .form-card{
+      border:1px solid var(--line);
+      border-radius:24px;
+      padding:22px;
+      background:rgba(255,255,255,.09);
+    }
+    label{display:block; font-weight:900; margin-bottom:10px; color:#e8f1ff}
+    select,input{
+      width:100%; border:1px solid var(--line); background:#eef5ff; color:#10203d;
+      border-radius:14px; padding:14px 14px; font-weight:800; outline:none;
+    }
+    .login-panel{width:min(1120px,100%)}
+    .login-panel h2{font-size:42px; text-align:center; margin-bottom:10px}
+    .login-panel .intro{text-align:center; color:var(--muted); font-size:18px; margin-bottom:26px}
+    .question-layout{display:grid; grid-template-columns:1.18fr .82fr; gap:22px; height:100%}
+    .question-left,.question-right{
+      border:1px solid var(--line); border-radius:26px; background:rgba(255,255,255,.09); padding:22px; overflow:auto;
+    }
+    .progress-wrap{display:flex; align-items:center; gap:16px; margin-bottom:16px}
+    .progress-text{font-weight:1000; color:#eaf3ff; white-space:nowrap}
+    .progress-bar{height:15px; flex:1; background:rgba(255,255,255,.14); border-radius:999px; overflow:hidden; border:1px solid var(--line)}
+    .progress-fill{height:100%; width:0%; background:linear-gradient(90deg,var(--gold),var(--green)); transition:.25s ease}
+    .topic-pill{display:inline-flex; padding:8px 13px; border-radius:999px; background:rgba(107,183,255,.18); border:1px solid rgba(107,183,255,.36); color:#dceeff; font-weight:900; margin-bottom:13px}
+    .q-title{font-size:30px; line-height:1.25; margin-bottom:16px; font-weight:1000}
+    .q-body{font-size:25px; line-height:1.48; color:#f7fbff; margin-bottom:18px}
+    .visual-box{background:#f7fbff; color:#09203f; border-radius:22px; padding:18px; margin-top:16px; min-height:210px; display:grid; place-items:center; box-shadow:inset 0 0 0 1px rgba(0,0,0,.08)}
+    .answers-title{font-size:28px; font-weight:1000; margin-bottom:18px}
+    .choice{
+      width:100%; text-align:left; margin-bottom:14px; padding:18px;
+      border-radius:18px; border:2px solid var(--line); color:#f7fbff;
+      background:rgba(255,255,255,.10); cursor:pointer; font-size:22px; font-weight:850;
+      transition:.16s ease;
+    }
+    .choice:hover{background:rgba(255,255,255,.17); transform:translateY(-1px)}
+    .choice.selected{border-color:var(--gold); background:rgba(247,200,67,.22); box-shadow:0 0 0 4px rgba(247,200,67,.13)}
+    .student-footer{display:flex; justify-content:space-between; align-items:center; gap:12px; margin-top:18px}
+    .mini-score{color:var(--muted); font-weight:800}
+    .finish-card{text-align:center; max-width:820px; margin:0 auto; padding:38px; border:1px solid var(--line); border-radius:32px; background:rgba(255,255,255,.10)}
+    .finish-card h2{font-size:52px; margin-bottom:12px}
+    .big-percent{font-size:92px; font-weight:1000; margin:14px 0; color:var(--gold)}
+    .league-badge{display:inline-flex; align-items:center; justify-content:center; padding:13px 24px; border-radius:999px; font-weight:1000; color:#061126; font-size:25px; margin-top:10px}
+    .badge-Gold{background:var(--gold)} .badge-Silver{background:var(--silver)} .badge-Bronze{background:var(--bronze); color:#fff}
+
+    /* Teacher dashboard */
+    .teacher-head{display:flex; justify-content:space-between; align-items:center; gap:14px; margin-bottom:18px}
+    .teacher-head h2{font-size:38px}
+    .teacher-controls{display:flex; gap:12px; align-items:end; flex-wrap:wrap}
+    .teacher-controls .mini-select{width:180px}
+    .stat-grid{display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:18px}
+    .stat-card{border:1px solid var(--line); border-radius:20px; background:rgba(255,255,255,.08); padding:16px}
+    .stat-label{color:var(--muted); font-weight:800; font-size:14px}
+    .stat-value{font-size:30px; font-weight:1000; margin-top:4px}
+    .league-columns{display:grid; grid-template-columns:repeat(3,1fr); gap:16px}
+    .league-column{border:1px solid var(--line); border-radius:24px; background:rgba(255,255,255,.08); overflow:hidden; min-height:430px}
+    .league-header{padding:16px 18px; color:#061126; font-weight:1000; font-size:25px; display:flex; justify-content:space-between; align-items:center}
+    .league-header.Gold{background:var(--gold)} .league-header.Silver{background:var(--silver)} .league-header.Bronze{background:var(--bronze); color:#fff}
+    .student-list{padding:14px; display:flex; flex-direction:column; gap:10px}
+    .student-row{border:1px solid var(--line); background:rgba(255,255,255,.10); border-radius:18px; padding:13px}
+    .student-row-top{display:flex; justify-content:space-between; gap:10px; align-items:center; margin-bottom:8px}
+    .student-name{font-size:18px; font-weight:1000}
+    .status{font-weight:1000; font-size:12px; border-radius:999px; padding:6px 9px; white-space:nowrap}
+    .status.working{background:rgba(107,183,255,.20); color:#d9edff; border:1px solid rgba(107,183,255,.35)}
+    .status.finished{background:rgba(41,211,145,.22); color:#dcfff2; border:1px solid rgba(41,211,145,.4)}
+    .row-details{display:grid; grid-template-columns:1fr 1fr; gap:7px; color:var(--muted); font-weight:800; font-size:13px}
+    .score-line{font-size:22px; color:#fff; font-weight:1000; margin-top:8px}
+    .tinybar{height:9px; background:rgba(255,255,255,.12); border-radius:999px; overflow:hidden; margin-top:9px}
+    .tinybar span{display:block; height:100%; background:linear-gradient(90deg,var(--blue),var(--gold)); width:0%}
+    .empty{color:var(--muted); text-align:center; padding:20px; font-weight:800}
+    .final-wrap{display:none}
+    .final-wrap.active{display:block}
+    .live-wrap.hidden{display:none}
+    .final-title{text-align:center; margin:8px 0 20px}
+    .final-title h2{font-size:54px}
+    .final-title p{font-size:20px;color:var(--muted); margin-top:8px}
+    .final-student{font-size:20px; font-weight:1000; padding:12px 14px; border-radius:15px; background:rgba(255,255,255,.12); border:1px solid var(--line); margin-bottom:9px; display:flex; justify-content:space-between; gap:8px}
+    .notice{margin-top:14px; color:#dceaff; background:rgba(255,255,255,.08); padding:12px 14px; border-radius:16px; border:1px solid var(--line); font-weight:750}
+    .footer-copy{position:absolute; left:28px; bottom:12px; color:rgba(255,255,255,.50); font-size:12px; font-weight:700}
+
+    svg{max-width:100%; height:auto}
+    .math-table{border-collapse:collapse; font-size:28px; font-weight:900; text-align:center; color:#09203f; background:white}
+    .math-table th,.math-table td{border:3px solid #173b68; padding:14px 22px; min-width:70px}
+    .math-table th{background:#dcedff}
+    .pattern-line{font-size:34px;font-weight:1000;color:#09203f;text-align:center}
+    .equation-line{font-size:42px;font-weight:1000;color:#09203f;text-align:center}
+    @media (max-width:950px){
+      body{overflow:auto}.app{height:auto;min-height:100vh}.screen{height:auto;min-height:calc(100vh - 48px)}
+      .mode-grid,.form-grid,.question-layout,.league-columns,.stat-grid{grid-template-columns:1fr}
+      .hero-title{font-size:40px}.topbar{height:auto; align-items:flex-start; gap:14px}.content{height:auto}.center-content{height:auto}
+    }
+  </style>
+</head>
+<body>
+<div class="app">
+  <!-- HOME SCREEN -->
+  <section id="homeScreen" class="screen active">
+    <div class="topbar">
+      <div class="brand"><div class="logo">Δ</div><div><h1>Level Up Math</h1><p>Gold • Silver • Bronze Live Test</p></div></div>
+      <div class="small-pill" id="connectionPill">Checking Firebase...</div>
+    </div>
+    <div class="center-content">
+      <div class="hero">
+        <div class="hero-title"><span>Gold</span> <span>Silver</span> <span>Bronze</span></div>
+        <p class="hero-sub">Students answer the 20-question test on their tablets. The teacher screen shows live progress and reveals the new groups when everyone is finished.</p>
+        <div class="mode-grid">
+          <div class="big-card" onclick="showStudentLogin()">
+            <h2>Student View</h2>
+            <p>Select class, current category, and name. Then answer the test privately.</p>
+          </div>
+          <div class="big-card" onclick="showTeacher()">
+            <h2>Teacher View</h2>
+            <p>Project the live dashboard. It shows names, progress, percentage scores, and final grouping.</p>
+          </div>
+        </div>
+        <p class="notice">Final grouping rule: 90% and above → Gold, 70% to 89% → Silver, below 70% → Bronze.</p>
+      </div>
+    </div>
+    <div class="footer-copy">© 2026 Delta Matemática | Created by Luis Ramos Jr. All Rights Reserved.</div>
+  </section>
+
+  <!-- STUDENT LOGIN -->
+  <section id="studentLoginScreen" class="screen">
+    <div class="topbar">
+      <div class="brand"><div class="logo">S</div><div><h1>Student Login</h1><p>Choose your class, current category, and name.</p></div></div>
+      <button class="btn secondary" onclick="goHome()">Home</button>
+    </div>
+    <div class="center-content">
+      <div class="login-panel">
+        <h2>Ready to begin?</h2>
+        <p class="intro">Your answers will update the teacher dashboard after every question.</p>
+        <div class="form-grid">
+          <div class="form-card">
+            <label for="classSelect">1. Select Class</label>
+            <select id="classSelect" onchange="updateLeagueOptions()"></select>
+          </div>
+          <div class="form-card">
+            <label for="leagueSelect">2. Select Current Category</label>
+            <select id="leagueSelect" onchange="updateStudentNames()">
+              <option value="">Choose category</option>
+              <option value="Gold">Gold</option>
+              <option value="Silver">Silver</option>
+              <option value="Bronze">Bronze</option>
+            </select>
+          </div>
+          <div class="form-card">
+            <label for="studentSelect">3. Select Name</label>
+            <select id="studentSelect"></select>
+          </div>
+        </div>
+        <div class="btn-row" style="justify-content:center;margin-top:26px">
+          <button class="btn primary" onclick="startStudentTest()">Start Test</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- STUDENT QUESTION SCREEN -->
+  <section id="studentQuestionScreen" class="screen">
+    <div class="topbar">
+      <div class="brand"><div class="logo">Q</div><div><h1 id="studentHeaderName">Student Test</h1><p id="studentHeaderInfo">Question 1 of 20</p></div></div>
+      <div class="small-pill" id="studentLiveScore">Score: 0/0</div>
+    </div>
+    <div class="content">
+      <div class="question-layout">
+        <div class="question-left">
+          <div class="progress-wrap">
+            <div class="progress-text" id="progressText">Question 1 / 20</div>
+            <div class="progress-bar"><div id="progressFill" class="progress-fill"></div></div>
+          </div>
+          <div class="topic-pill" id="topicPill">Topic</div>
+          <div class="q-title" id="questionTitle">Question</div>
+          <div class="q-body" id="questionBody"></div>
+          <div id="visualBox" class="visual-box"></div>
+        </div>
+        <div class="question-right">
+          <div class="answers-title">Choose your answer</div>
+          <div id="choicesBox"></div>
+          <div class="student-footer">
+            <div class="mini-score" id="answerReminder">Select one answer.</div>
+            <button class="btn primary" id="submitAnswerBtn" onclick="submitAnswer()">Submit Answer</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- STUDENT FINISH SCREEN -->
+  <section id="studentFinishScreen" class="screen">
+    <div class="topbar">
+      <div class="brand"><div class="logo">✓</div><div><h1>Test Complete</h1><p>Your score has been finalized.</p></div></div>
+      <button class="btn secondary" onclick="goHome()">Home</button>
+    </div>
+    <div class="center-content">
+      <div class="finish-card">
+        <h2 id="finishName">Great work!</h2>
+        <p class="hero-sub" id="finishDetails">Your result has been sent to the teacher dashboard.</p>
+        <div class="big-percent" id="finishPercent">0%</div>
+        <div id="finishLeague" class="league-badge badge-Silver">Silver</div>
+        <p class="notice">You may now wait quietly while your classmates finish.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- TEACHER SCREEN -->
+  <section id="teacherScreen" class="screen">
+    <div class="topbar">
+      <div class="brand"><div class="logo">T</div><div><h1>Teacher Dashboard</h1><p>Projected live progress screen</p></div></div>
+      <div class="btn-row">
+        <button class="btn secondary" onclick="goHome()">Home</button>
+        <button class="btn danger" onclick="resetSelectedClass()">Reset Class</button>
+      </div>
+    </div>
+    <div class="content">
+      <div class="teacher-head">
+        <div>
+          <h2 id="teacherTitle">Grade 6A Dashboard</h2>
+          <p style="color:var(--muted);font-size:18px;margin-top:4px">During the test, students remain grouped by their starting category. Final groups are revealed when everyone is finished.</p>
+        </div>
+        <div class="teacher-controls">
+          <div>
+            <label for="teacherClassSelect">Select Class</label>
+            <select class="mini-select" id="teacherClassSelect" onchange="switchTeacherClass()"></select>
+          </div>
+        </div>
+      </div>
+
+      <div class="stat-grid">
+        <div class="stat-card"><div class="stat-label">Students Finished</div><div class="stat-value" id="finishedStat">0/0</div></div>
+        <div class="stat-card"><div class="stat-label">Class Average</div><div class="stat-value" id="averageStat">0%</div></div>
+        <div class="stat-card"><div class="stat-label">Highest Score</div><div class="stat-value" id="highestStat">0%</div></div>
+        <div class="stat-card"><div class="stat-label">Firebase Status</div><div class="stat-value" id="firebaseStat" style="font-size:22px">Demo</div></div>
+      </div>
+
+      <div id="liveWrap" class="live-wrap">
+        <div class="league-columns">
+          <div class="league-column"><div class="league-header Gold"><span>Gold</span><span id="goldCount">0</span></div><div id="GoldList" class="student-list"></div></div>
+          <div class="league-column"><div class="league-header Silver"><span>Silver</span><span id="silverCount">0</span></div><div id="SilverList" class="student-list"></div></div>
+          <div class="league-column"><div class="league-header Bronze"><span>Bronze</span><span id="bronzeCount">0</span></div><div id="BronzeList" class="student-list"></div></div>
+        </div>
+      </div>
+
+      <div id="finalWrap" class="final-wrap">
+        <div class="final-title"><h2>New Math League Groups</h2><p>All students are finished. Final positions are now revealed.</p></div>
+        <div class="league-columns">
+          <div class="league-column"><div class="league-header Gold"><span>Gold</span><span id="finalGoldCount">0</span></div><div id="FinalGoldList" class="student-list"></div></div>
+          <div class="league-column"><div class="league-header Silver"><span>Silver</span><span id="finalSilverCount">0</span></div><div id="FinalSilverList" class="student-list"></div></div>
+          <div class="league-column"><div class="league-header Bronze"><span>Bronze</span><span id="finalBronzeCount">0</span></div><div id="FinalBronzeList" class="student-list"></div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+/*************************************************************
+  1. FIREBASE CONFIG
+  Paste your Firebase SDK config below.
+  Firestore must be enabled in your Firebase project.
+*************************************************************/
+const firebaseConfig = {
+  apiKey: "AIzaSyDKwqLGMG0etNoS3-P7SINxFC96Y6GvZ5c",
+  authDomain: "gold-silver-bronze-ac635.firebaseapp.com",
+  projectId: "gold-silver-bronze-ac635",
+  storageBucket: "gold-silver-bronze-ac635.firebasestorage.app",
+  messagingSenderId: "376658521068",
+  appId: "1:376658521068:web:6197b3ed876c173efb2ec9",
+  measurementId: "G-GM85X7EHEX"
+};
+
+/*************************************************************
+  2. STUDENT LISTS
+  Replace the placeholder names with your real students.
+*************************************************************/
+const STUDENTS = {
+  "Grade 6°A": {
+    Gold: ["IGNACIA", "LEON", "MICHELA", "BALTAZAR", "GUSTAVO", "SANTIAGO", "LUCIANO", "SEBASTIAN", "AGUSTIN", "SAVKA", "MAGDALENA"],
+    Silver: ["SANTIAGO A.", "CONSUELO", "ELENA", "PAZ", "GRACIELA", "VICTORIA", "VEDRAN"],
+    Bronze: ["MARIELLA", "PAULETTE", "MARIA", "JOSEFINA"]
+  },
+  "Grade 6°B": {
+    Gold: ["ELIAM", "GABRIEL", "EMMA", "LEONOR", "LUCAS", "BORIS", "ALIA", "JUAN", "SOFIA", "JOSEFA V", "FRANCO"],
+    Silver: ["YORGOS", "IGNACIO", "MATEO", "OCTAVIO", "ROKO", "ISIDORA", "JOAQUIN"],
+    Bronze: ["KARIM", "FIORELLA", "MIA", "PEDRO", "SILVANA", "JOSEFA M"]
+  },
+  "Grade 6°C": {
+    Gold: ["JOAQUIN", "TOMAS", "HAROLD", "EMILIA", "SANTIAGO", "AGUSTIN O", "PEDRO P", "PEDRO O", "ELENI"],
+    Silver: ["RAFAEL", "MATILDA", "AMIRA", "FELIPE", "CONSTANZA", "PAZ", "VICENTE", "ISADORA"],
+    Bronze: ["AMANDA", "NADIA", "MICAELA", "AGUSTIN L", "MIA", "MATEO", "PAZ"]
+  }
+};
+
+/*************************************************************
+  3. QUESTIONS
+*************************************************************/
+const QUESTIONS = [
+  {topic:"Number Patterns", title:"Question 1", body:"The number pattern is:<br><br><b>5, 12, 19, 26, ...</b><br><br>What is the <b>7th number</b> in the pattern?", choices:["40","42","47","49"], answer:2, visual:"pattern1"},
+  {topic:"Shape Patterns", title:"Question 2", body:"Look at the shape pattern below.<br><br>How many circle dots will there be in <b>Level 6</b>?", choices:["19","21","23","25"], answer:2, visual:"dots"},
+  {topic:"Word Problem Patterns", title:"Question 3", body:"Mia is saving stickers in her notebook.<br><br>Day 1: 4 stickers<br>Day 2: 9 stickers<br>Day 3: 14 stickers<br>Day 4: 19 stickers<br><br>If the pattern continues, how many stickers will Mia have on <b>Day 7</b>?", choices:["29","34","39","44"], answer:1, visual:"stickers"},
+  {topic:"Table Patterns", title:"Question 4", body:"Look at the table.<br><br>What is the rule for finding <b>y</b>?", choices:["y = x + 3","y = x + 6","y = 3x","y = 6x"], answer:2, visual:"table"},
+  {topic:"Coordinate Plane", title:"Question 5", body:"Look at the coordinate plane.<br><br>Point A is plotted on the graph.<br><br>What are the coordinates of <b>Point A</b>?", choices:["(6, 4)","(4, 6)","(4, 0)","(0, 6)"], answer:1, visual:"coordA"},
+  {topic:"One-Step Equations", title:"Question 6", body:"Solve the equation.<br><br><b>x + 8 = 21</b><br><br>What is the value of <b>x</b>?", choices:["11","12","13","14"], answer:2, visual:"equation1"},
+  {topic:"Two-Step Equations", title:"Question 7", body:"Solve the equation.<br><br><b>3x + 4 = 22</b><br><br>What is the value of <b>x</b>?", choices:["5","6","7","8"], answer:1, visual:"equation2"},
+  {topic:"Balance Seesaw", title:"Question 8", body:"Look at the balance seesaw.<br><br>Which equation represents the balance seesaw?", choices:["3x + 5 = 20","3x - 5 = 20","5x + 3 = 20","3x + 20 = 5"], answer:0, visual:"balance1"},
+  {topic:"Algebraic Expressions", title:"Question 9", body:"Translate the situation into an algebraic expression.<br><br><b>A number is increased by 12.</b><br><br>Which expression represents the situation?", choices:["x - 12","x + 12","12x","x ÷ 12"], answer:1, visual:null},
+  {topic:"Algebraic Expressions", title:"Question 10", body:"Translate the situation into an algebraic expression.<br><br><b>Five times a number is decreased by 7.</b><br><br>Which expression represents the situation?", choices:["5x + 7","x + 5 - 7","5x - 7","7x - 5"], answer:2, visual:null},
+  {topic:"Algebraic Equations", title:"Question 11", body:"Translate the situation into an equation.<br><br><b>Twice a number x added to 5 is 23.</b><br><br>Which equation represents the situation?", choices:["2x + 5 = 23","2x - 5 = 23","x + 5 = 23","5x + 2 = 23"], answer:0, visual:null},
+  {topic:"Coordinate Plane", title:"Question 12", body:"Look at the triangle on the coordinate plane.<br><br>What are the coordinates of vertex <b>B</b>?", choices:["(2, 5)","(5, 2)","(3, 5)","(5, 3)"], answer:0, visual:"triangle"},
+  {topic:"Number Patterns", title:"Question 13", body:"Look at the pattern.<br><br><b>1, 4, 9, 16, 25, ...</b><br><br>What is the <b>8th number</b> in the pattern?", choices:["36","49","64","81"], answer:2, visual:null},
+  {topic:"Equation Word Problems", title:"Question 14", body:"Maria bought <b>3 identical hats</b> and a pair of boots.<br><br>The boots cost <b>25000 pesos</b>.<br>Maria paid a total of <b>49000 pesos</b>.<br><br>Which equation can be used to find the price of <b>one hat</b>?", choices:["3x + 25000 = 49000","3x - 25000 = 49000","x + 25000 = 49000","25000x + 3 = 49000"], answer:0, visual:null},
+  {topic:"Equation Word Problems", title:"Question 15", body:"Carlos bought <b>4 identical notebooks</b> and a pencil case.<br><br>The pencil case cost <b>3500 pesos</b>.<br>Carlos paid a total of <b>15500 pesos</b>.<br><br>Which equation can be used to find the price of <b>one notebook</b>?", choices:["4x + 3500 = 15500","4x - 3500 = 15500","x + 3500 = 15500","3500x + 4 = 15500"], answer:0, visual:null},
+  {topic:"Growing Patterns", title:"Question 16", body:"A group of bacteria starts with <b>2 bacteria</b>.<br><br>The number of bacteria triples every minute.<br><br>How many bacteria will there be after <b>4 minutes</b>?", choices:["54","108","162","486"], answer:2, visual:null},
+  {topic:"Coordinate Plane", title:"Question 17", body:"Look at the coordinate plane.<br><br>Point B is plotted in the first quadrant.<br><br>What are the coordinates of <b>Point B</b>?", choices:["(7, 3)","(3, 7)","(7, 0)","(0, 3)"], answer:0, visual:"coordB"},
+  {topic:"Balance Seesaw", title:"Question 18", body:"Look at the balance seesaw.<br><br>The balance represents this equation:<br><br><b>3x + 20 = 80</b><br><br>What is the value of <b>x</b>?", choices:["10","15","20","25"], answer:2, visual:"balance2"},
+  {topic:"Algebraic Expressions", title:"Question 19", body:"Translate the situation into an algebraic expression.<br><br><b>A number x is multiplied by 4. Then, 9 is subtracted from the result.</b><br><br>Which expression represents the situation?", choices:["4x + 9","4x - 9","x - 4 + 9","9x - 4"], answer:1, visual:null},
+  {topic:"Number Patterns", title:"Question 20", body:"Look at the number pattern.<br><br><b>6, 11, 16, 21, 26, ...</b><br><br>What is the rule for the pattern?", choices:["Add 4","Add 5","Add 6","Add 7"], answer:1, visual:null}
+];
+
+/*************************************************************
+  4. APP STATE
+*************************************************************/
+let db = null;
+let firebaseReady = false;
+let selectedAnswer = null;
+let currentQuestionIndex = 0;
+let currentStudent = null;
+let currentTeacherClass = "Grade 6A";
+let unsubscribeTeacher = null;
+let localResults = {};
+const TEST_ID = "grade6_math_league_final";
+
+function isConfigReady(){ return firebaseConfig.apiKey && !firebaseConfig.apiKey.includes("PASTE_"); }
+function safeId(str){ return String(str).replace(/[^a-zA-Z0-9]/g,"_"); }
+function studentDocId(cls, name){ return `${safeId(cls)}__${safeId(name)}`; }
+function finalCategory(percent){ if(percent >= 90) return "Gold"; if(percent >= 70) return "Silver"; return "Bronze"; }
+function showScreen(id){ document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active')); document.getElementById(id).classList.add('active'); }
+function goHome(){ if(unsubscribeTeacher){ unsubscribeTeacher(); unsubscribeTeacher=null; } showScreen('homeScreen'); }
+
+function initFirebase(){
+  try{
+    if(isConfigReady()){
+      firebase.initializeApp(firebaseConfig);
+      db = firebase.firestore();
+      firebaseReady = true;
+      document.getElementById('connectionPill').textContent = 'Firebase connected';
+      document.getElementById('firebaseStat').textContent = 'Connected';
+    } else {
+      firebaseReady = false;
+      document.getElementById('connectionPill').textContent = 'Demo mode: paste Firebase config';
+      document.getElementById('firebaseStat').textContent = 'Demo Mode';
+    }
+  }catch(e){
+    console.error(e);
+    firebaseReady = false;
+    document.getElementById('connectionPill').textContent = 'Firebase error: using demo mode';
+    document.getElementById('firebaseStat').textContent = 'Demo Mode';
+  }
+}
+
+function populateClassSelects(){
+  const classes = Object.keys(STUDENTS);
+  const classSelect = document.getElementById('classSelect');
+  const teacherClassSelect = document.getElementById('teacherClassSelect');
+  classSelect.innerHTML = '<option value="">Choose class</option>' + classes.map(c=>`<option value="${c}">${c}</option>`).join('');
+  teacherClassSelect.innerHTML = classes.map(c=>`<option value="${c}">${c}</option>`).join('');
+  teacherClassSelect.value = currentTeacherClass;
+  updateStudentNames();
+}
+
+function showStudentLogin(){ showScreen('studentLoginScreen'); }
+function updateLeagueOptions(){ document.getElementById('leagueSelect').value=''; updateStudentNames(); }
+function updateStudentNames(){
+  const cls = document.getElementById('classSelect').value;
+  const league = document.getElementById('leagueSelect').value;
+  const studentSelect = document.getElementById('studentSelect');
+  if(!cls || !league){ studentSelect.innerHTML = '<option value="">Choose class and category first</option>'; return; }
+  const names = STUDENTS[cls][league] || [];
+  studentSelect.innerHTML = '<option value="">Choose name</option>' + names.map(n=>`<option value="${n}">${n}</option>`).join('');
+}
+
+async function startStudentTest(){
+  const cls = document.getElementById('classSelect').value;
+  const originalCategory = document.getElementById('leagueSelect').value;
+  const name = document.getElementById('studentSelect').value;
+  if(!cls || !originalCategory || !name){ alert('Please select class, category, and name.'); return; }
+  currentStudent = { className:cls, name, originalCategory, answered:0, correct:0, percent:0, completed:false, answers:[] };
+  currentQuestionIndex = 0;
+  selectedAnswer = null;
+  await saveStudentProgress();
+  showScreen('studentQuestionScreen');
+  renderQuestion();
+}
+
+function renderQuestion(){
+  const q = QUESTIONS[currentQuestionIndex];
+  const total = QUESTIONS.length;
+  document.getElementById('studentHeaderName').textContent = currentStudent.name;
+  document.getElementById('studentHeaderInfo').textContent = `${currentStudent.className} • Started in ${currentStudent.originalCategory}`;
+  document.getElementById('progressText').textContent = `Question ${currentQuestionIndex+1} / ${total}`;
+  document.getElementById('progressFill').style.width = `${(currentQuestionIndex/total)*100}%`;
+  document.getElementById('topicPill').textContent = q.topic;
+  document.getElementById('questionTitle').textContent = q.title;
+  document.getElementById('questionBody').innerHTML = q.body;
+  const visualBox = document.getElementById('visualBox');
+  if(q.visual){
+    visualBox.classList.remove('hidden');
+    visualBox.innerHTML = renderVisual(q.visual);
+  } else {
+    visualBox.classList.add('hidden');
+    visualBox.innerHTML = '';
+  }
+  document.getElementById('studentLiveScore').textContent = `Score: ${currentStudent.correct}/${currentStudent.answered}`;
+  document.getElementById('answerReminder').textContent = 'Select one answer.';
+  selectedAnswer = null;
+  const choices = q.choices.map((choice,idx)=>`<button class="choice" id="choice${idx}" onclick="selectChoice(${idx})">${String.fromCharCode(65+idx)}) ${choice}</button>`).join('');
+  document.getElementById('choicesBox').innerHTML = choices;
+  document.getElementById('submitAnswerBtn').textContent = currentQuestionIndex === total-1 ? 'Submit Final Answer' : 'Submit Answer';
+}
+function selectChoice(idx){
+  selectedAnswer = idx;
+  document.querySelectorAll('.choice').forEach(c=>c.classList.remove('selected'));
+  document.getElementById('choice'+idx).classList.add('selected');
+  document.getElementById('answerReminder').textContent = 'Answer selected. Click submit.';
+}
+async function submitAnswer(){
+  if(selectedAnswer === null){ alert('Please choose an answer first.'); return; }
+  const q = QUESTIONS[currentQuestionIndex];
+  const isCorrect = selectedAnswer === q.answer;
+  currentStudent.answered += 1;
+  if(isCorrect) currentStudent.correct += 1;
+  currentStudent.percent = Math.round((currentStudent.correct / currentStudent.answered) * 100);
+  currentStudent.answers.push({question:currentQuestionIndex+1, selected:selectedAnswer, correct:q.answer, isCorrect});
+  if(currentQuestionIndex >= QUESTIONS.length-1){
+    currentStudent.completed = true;
+    currentStudent.percent = Math.round((currentStudent.correct / QUESTIONS.length) * 100);
+    currentStudent.finalCategory = finalCategory(currentStudent.percent);
+    currentStudent.finishedAt = new Date().toISOString();
+    await saveStudentProgress();
+    renderFinish();
+  } else {
+    await saveStudentProgress();
+    currentQuestionIndex += 1;
+    renderQuestion();
+  }
+}
+function renderFinish(){
+  showScreen('studentFinishScreen');
+  document.getElementById('finishName').textContent = `Great work, ${currentStudent.name}!`;
+  document.getElementById('finishDetails').textContent = `You answered ${currentStudent.correct} out of ${QUESTIONS.length} questions correctly.`;
+  document.getElementById('finishPercent').textContent = `${currentStudent.percent}%`;
+  const badge = document.getElementById('finishLeague');
+  badge.className = `league-badge badge-${currentStudent.finalCategory}`;
+  badge.textContent = `Final Category: ${currentStudent.finalCategory}`;
+}
+
+async function saveStudentProgress(){
+  const record = {
+    testId: TEST_ID,
+    className: currentStudent.className,
+    name: currentStudent.name,
+    originalCategory: currentStudent.originalCategory,
+    answered: currentStudent.answered,
+    correct: currentStudent.correct,
+    total: QUESTIONS.length,
+    percent: currentStudent.percent,
+    completed: currentStudent.completed,
+    finalCategory: currentStudent.completed ? currentStudent.finalCategory : null,
+    answers: currentStudent.answers,
+    updatedAt: new Date().toISOString()
+  };
+  if(firebaseReady){
+    await db.collection('mathLeagueTests').doc(TEST_ID).collection('students').doc(studentDocId(currentStudent.className,currentStudent.name)).set(record, {merge:true});
+  } else {
+    localResults[studentDocId(currentStudent.className,currentStudent.name)] = record;
+    localStorage.setItem('mathLeagueDemoResults', JSON.stringify(localResults));
+  }
+}
+
+/*************************************************************
+  TEACHER DASHBOARD
+*************************************************************/
+function showTeacher(){
+  showScreen('teacherScreen');
+  currentTeacherClass = document.getElementById('teacherClassSelect').value || "Grade 6A";
+  listenTeacherClass();
+}
+function switchTeacherClass(){
+  currentTeacherClass = document.getElementById('teacherClassSelect').value;
+  listenTeacherClass();
+}
+function getRosterRows(cls){
+  const rows=[];
+  for(const league of ["Gold","Silver","Bronze"]){
+    (STUDENTS[cls][league] || []).forEach(name=> rows.push({name, originalCategory:league}));
+  }
+  return rows;
+}
+function listenTeacherClass(){
+  document.getElementById('teacherTitle').textContent = `${currentTeacherClass} Dashboard`;
+  if(unsubscribeTeacher){ unsubscribeTeacher(); unsubscribeTeacher=null; }
+  if(firebaseReady){
+    unsubscribeTeacher = db.collection('mathLeagueTests').doc(TEST_ID).collection('students')
+      .where('className','==',currentTeacherClass)
+      .onSnapshot(snapshot=>{
+        const data = {};
+        snapshot.forEach(doc=> data[doc.id] = doc.data());
+        renderTeacher(data);
+      }, err=>{
+        console.error(err);
+        alert('Firebase read error. Check Firestore rules and config.');
+      });
+  } else {
+    try{ localResults = JSON.parse(localStorage.getItem('mathLeagueDemoResults') || '{}'); }catch(e){ localResults={}; }
+    renderTeacher(localResults);
+  }
+}
+function renderTeacher(data){
+  const roster = getRosterRows(currentTeacherClass);
+  const rows = roster.map(r=>{
+    const rec = data[studentDocId(currentTeacherClass,r.name)];
+    return rec || {className:currentTeacherClass, name:r.name, originalCategory:r.originalCategory, answered:0, correct:0, total:QUESTIONS.length, percent:0, completed:false, finalCategory:null};
+  });
+  const finished = rows.filter(r=>r.completed).length;
+  const active = rows.filter(r=>r.answered>0);
+  const avg = active.length ? Math.round(active.reduce((s,r)=>s+(r.percent||0),0)/active.length) : 0;
+  const highest = active.length ? Math.max(...active.map(r=>r.percent||0)) : 0;
+  document.getElementById('finishedStat').textContent = `${finished}/${rows.length}`;
+  document.getElementById('averageStat').textContent = `${avg}%`;
+  document.getElementById('highestStat').textContent = `${highest}%`;
+  if(finished === rows.length && rows.length > 0){
+    document.getElementById('liveWrap').classList.add('hidden');
+    document.getElementById('finalWrap').classList.add('active');
+    renderFinalGroups(rows);
+  } else {
+    document.getElementById('liveWrap').classList.remove('hidden');
+    document.getElementById('finalWrap').classList.remove('active');
+    renderLiveGroups(rows);
+  }
+}
+function renderLiveGroups(rows){
+  for(const league of ["Gold","Silver","Bronze"]){
+    const list = document.getElementById(league+'List');
+    const groupRows = rows.filter(r=>r.originalCategory===league);
+    document.getElementById(league.toLowerCase()+'Count').textContent = groupRows.length;
+    list.innerHTML = groupRows.length ? groupRows.map(studentRowHtml).join('') : '<div class="empty">No students</div>';
+  }
+}
+function studentRowHtml(r){
+  const statusClass = r.completed ? 'finished' : 'working';
+  const statusText = r.completed ? 'Finished' : (r.answered>0 ? 'Working' : 'Waiting');
+  const progressPct = Math.round(((r.answered||0)/(r.total||QUESTIONS.length))*100);
+  return `<div class="student-row">
+    <div class="student-row-top"><div class="student-name">${r.name}</div><div class="status ${statusClass}">${statusText}</div></div>
+    <div class="row-details"><div>Progress: <b>${r.answered||0}/${r.total||QUESTIONS.length}</b></div><div>Correct: <b>${r.correct||0}</b></div></div>
+    <div class="score-line">${r.percent||0}%</div>
+    <div class="tinybar"><span style="width:${progressPct}%"></span></div>
+  </div>`;
+}
+function renderFinalGroups(rows){
+  const groups = {Gold:[], Silver:[], Bronze:[]};
+  rows.forEach(r=>{
+    const cat = r.finalCategory || finalCategory(r.percent||0);
+    groups[cat].push(r);
+  });
+  for(const league of ["Gold","Silver","Bronze"]){
+    const el = document.getElementById('Final'+league+'List');
+    document.getElementById('final'+league+'Count').textContent = groups[league].length;
+    el.innerHTML = groups[league].length ? groups[league].sort((a,b)=>(b.percent||0)-(a.percent||0)).map(r=>`<div class="final-student"><span>${r.name}</span><span>${r.percent||0}%</span></div>`).join('') : '<div class="empty">No students</div>';
+  }
+}
+async function resetSelectedClass(){
+  if(!confirm(`Reset all results for ${currentTeacherClass}? This clears scores for this class only.`)) return;
+  const roster = getRosterRows(currentTeacherClass);
+  if(firebaseReady){
+    const batch = db.batch();
+    roster.forEach(r=>{
+      const ref = db.collection('mathLeagueTests').doc(TEST_ID).collection('students').doc(studentDocId(currentTeacherClass,r.name));
+      batch.delete(ref);
+    });
+    await batch.commit();
+  } else {
+    roster.forEach(r=> delete localResults[studentDocId(currentTeacherClass,r.name)]);
+    localStorage.setItem('mathLeagueDemoResults', JSON.stringify(localResults));
+    renderTeacher(localResults);
+  }
+}
+
+/*************************************************************
+  VISUAL RENDERERS
+*************************************************************/
+function renderVisual(type){
+  switch(type){
+    case 'pattern1': return `<div class="pattern-line">5, 12, 19, 26, ...</div>`;
+    case 'pattern2': return `<div class="pattern-line">6, 11, 16, 21, 26, ...</div>`;
+    case 'dots': return dotPatternSvg();
+    case 'stickers': return `<div class="pattern-line">4 → 9 → 14 → 19 → ?</div>`;
+    case 'table': return `<table class="math-table"><tr><th>x</th><td>1</td><td>2</td><td>3</td><td>4</td></tr><tr><th>y</th><td>3</td><td>6</td><td>9</td><td>12</td></tr></table>`;
+    case 'coordA': return coordinateSvg([{x:4,y:6,label:'A',color:'#2563eb'}]);
+    case 'coordB': return coordinateSvg([{x:7,y:3,label:'B',color:'#2563eb'}]);
+    case 'triangle': return triangleSvg();
+    case 'equation1': return `<div class="equation-line">x + 8 = 21</div>`;
+    case 'equation2': return `<div class="equation-line">3x + 4 = 22</div>`;
+    case 'balance1': return balanceSvg(3,5,20,false);
+    case 'balance2': return balanceSvg(3,20,80,true);
+    case 'expression1': return `<div class="equation-line">x &nbsp; ? &nbsp; 12</div>`;
+    case 'expression2': return `<div class="equation-line">5x &nbsp; ? &nbsp; 7</div>`;
+    case 'expression3': return `<div class="equation-line">2x + 5 = 23</div>`;
+    case 'expression4': return `<div class="equation-line">4x &nbsp; ? &nbsp; 9</div>`;
+    case 'squares': return `<div class="pattern-line">1×1, 2×2, 3×3, 4×4, ...</div>`;
+    case 'shopping1': return shoppingSvg('3 hats','Boots ₱25000','Total ₱49000');
+    case 'shopping2': return shoppingSvg('4 notebooks','Pencil case ₱3500','Total ₱15500');
+    case 'bacteria': return `<div class="pattern-line">2 → 6 → 18 → 54 → ?</div>`;
+    default: return '';
+  }
+}
+function dotPatternSvg(){
+  const dots = (cx,cy,n)=>Array.from({length:n},(_,i)=>`<circle cx="${cx+i*24}" cy="${cy}" r="8" fill="#2563eb"/>`).join('');
+  return `<svg viewBox="0 0 620 210" role="img" aria-label="Dot pattern levels 1 to 3">
+    <text x="95" y="28" text-anchor="middle" font-size="24" font-weight="900" fill="#0b2447">Level 1</text>
+    <text x="310" y="28" text-anchor="middle" font-size="24" font-weight="900" fill="#0b2447">Level 2</text>
+    <text x="525" y="28" text-anchor="middle" font-size="24" font-weight="900" fill="#0b2447">Level 3</text>
+    ${dots(67,80,3)}
+    ${dots(274,66,3)} ${dots(262,104,4)}
+    ${dots(489,52,3)} ${dots(477,90,4)} ${dots(465,128,5)}
+  </svg>`;
+}
+function coordinateSvg(points){
+  const size=420, pad=45, step=32, origin={x:pad,y:pad+10*step};
+  let grid='';
+  for(let i=0;i<=10;i++){
+    const x=origin.x+i*step, y=origin.y-i*step;
+    grid += `<line x1="${x}" y1="${origin.y}" x2="${x}" y2="${origin.y-10*step}" stroke="#d4dce8"/>`;
+    grid += `<line x1="${origin.x}" y1="${y}" x2="${origin.x+10*step}" y2="${y}" stroke="#d4dce8"/>`;
+    grid += `<text x="${x}" y="${origin.y+24}" text-anchor="middle" font-size="15" font-weight="800" fill="#0b2447">${i}</text>`;
+    grid += `<text x="${origin.x-18}" y="${y+5}" text-anchor="middle" font-size="15" font-weight="800" fill="#0b2447">${i}</text>`;
+  }
+  const pts = points.map(p=>{
+    const x=origin.x+p.x*step, y=origin.y-p.y*step;
+    return `<circle cx="${x}" cy="${y}" r="10" fill="${p.color}"/><text x="${x+18}" y="${y-14}" font-size="26" font-weight="1000" fill="${p.color}">${p.label}</text>`;
+  }).join('');
+  return `<svg viewBox="0 0 ${size} ${size}" role="img" aria-label="Coordinate plane">
+    <rect x="0" y="0" width="${size}" height="${size}" fill="#ffffff"/>
+    ${grid}
+    <line x1="${origin.x}" y1="${origin.y}" x2="${origin.x+10*step+25}" y2="${origin.y}" stroke="#10203d" stroke-width="4" marker-end="url(#arrow)"/>
+    <line x1="${origin.x}" y1="${origin.y}" x2="${origin.x}" y2="${origin.y-10*step-25}" stroke="#10203d" stroke-width="4" marker-end="url(#arrow)"/>
+    <defs><marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L0,6 L9,3 z" fill="#10203d" /></marker></defs>
+    <text x="${origin.x+10*step+35}" y="${origin.y+7}" font-size="24" font-weight="1000" fill="#10203d">x</text>
+    <text x="${origin.x-8}" y="${origin.y-10*step-34}" font-size="24" font-weight="1000" fill="#10203d">y</text>
+    ${pts}
+  </svg>`;
+}
+function triangleSvg(){
+  const a={x:1,y:1,label:'A'}, b={x:2,y:5,label:'B'}, c={x:6,y:2,label:'C'};
+  return coordinateSvg([]).replace('</svg>', `<polygon points="${45+a.x*32},${365-a.y*32} ${45+b.x*32},${365-b.y*32} ${45+c.x*32},${365-c.y*32}" fill="rgba(37,99,235,.15)" stroke="#2563eb" stroke-width="4"/>${[a,b,c].map(p=>`<circle cx="${45+p.x*32}" cy="${365-p.y*32}" r="8" fill="#2563eb"/><text x="${45+p.x*32+15}" y="${365-p.y*32-10}" font-size="24" font-weight="1000" fill="#2563eb">${p.label}</text>`).join('')}</svg>`);
+}
+function balanceSvg(xBoxes,leftUnits,rightUnits,showEquation){
+  const unitBlock = (x,y,s=14)=>`<rect x="${x}" y="${y}" width="${s}" height="${s}" rx="3" fill="#f4a340" stroke="#b96a22"/>`;
+  const unitsGrid = (x,y,n,cols,s=13,gap=3)=>Array.from({length:n},(_,i)=>unitBlock(x+(i%cols)*(s+gap), y+Math.floor(i/cols)*(s+gap), s)).join('');
+  const xbox = (x,y)=>`<rect x="${x}" y="${y}" width="42" height="42" rx="8" fill="#66c7e8" stroke="#0f6588" stroke-width="3"/><text x="${x+21}" y="${y+29}" text-anchor="middle" font-size="24" font-weight="1000" fill="#082f49">x</text>`;
+  return `<svg viewBox="0 0 700 300" role="img" aria-label="Balance seesaw">
+    <rect x="0" y="0" width="700" height="300" fill="#fff"/>
+    <line x1="110" y1="155" x2="590" y2="155" stroke="#374151" stroke-width="10" stroke-linecap="round"/>
+    <polygon points="350,160 302,255 398,255" fill="#475569"/><circle cx="350" cy="155" r="18" fill="#1f2937"/>
+    <rect x="70" y="155" width="205" height="13" rx="6" fill="#64748b"/><rect x="425" y="155" width="205" height="13" rx="6" fill="#64748b"/>
+    ${Array.from({length:xBoxes},(_,i)=>xbox(92+i*47,92)).join('')}
+    ${unitsGrid(100,52,leftUnits,10,10,2)}
+    ${unitsGrid(445,44,Math.min(rightUnits,80),10,10,2)}
+    ${showEquation ? '<text x="350" y="288" text-anchor="middle" font-size="28" font-weight="1000" fill="#0b2447">3x + 20 = 80</text>' : ''}
+  </svg>`;
+}
+function shoppingSvg(a,b,c){
+  return `<svg viewBox="0 0 620 190" role="img" aria-label="Shopping equation situation">
+    <rect width="620" height="190" rx="18" fill="#fff"/>
+    <rect x="35" y="50" width="150" height="85" rx="18" fill="#dbeafe" stroke="#2563eb" stroke-width="3"/>
+    <rect x="235" y="50" width="150" height="85" rx="18" fill="#fff7ed" stroke="#f97316" stroke-width="3"/>
+    <rect x="435" y="50" width="150" height="85" rx="18" fill="#ecfdf5" stroke="#10b981" stroke-width="3"/>
+    <text x="110" y="102" text-anchor="middle" font-size="24" font-weight="1000" fill="#0b2447">${a}</text>
+    <text x="310" y="102" text-anchor="middle" font-size="22" font-weight="1000" fill="#9a3412">${b}</text>
+    <text x="510" y="102" text-anchor="middle" font-size="22" font-weight="1000" fill="#047857">${c}</text>
+    <text x="210" y="103" font-size="36" font-weight="1000" fill="#0b2447">+</text>
+    <text x="405" y="103" font-size="36" font-weight="1000" fill="#0b2447">=</text>
+  </svg>`;
+}
+
+// Initialize app
+initFirebase();
+populateClassSelects();
+</script>
+</body>
+</html>
