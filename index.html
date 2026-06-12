@@ -514,11 +514,63 @@ function updateStudentNames(){
   studentSelect.innerHTML = '<option value="">Choose name</option>' + names.map(n=>`<option value="${n}">${n}</option>`).join('');
 }
 
+async function getExistingStudentRecord(cls, name){
+  const id = studentDocId(cls, name);
+  if(firebaseReady){
+    const snap = await db.collection('mathLeagueTests').doc(TEST_ID).collection('students').doc(id).get();
+    return snap.exists ? snap.data() : null;
+  }
+  try{
+    const saved = JSON.parse(localStorage.getItem('mathLeagueDemoResults') || '{}');
+    return saved[id] || null;
+  }catch(e){
+    return null;
+  }
+}
+
 async function startStudentTest(){
   const cls = document.getElementById('classSelect').value;
   const originalCategory = document.getElementById('leagueSelect').value;
   const name = document.getElementById('studentSelect').value;
   if(!cls || !originalCategory || !name){ alert('Please select class, category, and name.'); return; }
+
+  const existing = await getExistingStudentRecord(cls, name);
+
+  if(existing && existing.completed){
+    currentStudent = {
+      className: existing.className || cls,
+      name: existing.name || name,
+      originalCategory: existing.originalCategory || originalCategory,
+      answered: existing.answered || QUESTIONS.length,
+      correct: existing.correct || 0,
+      percent: existing.percent || 0,
+      completed: true,
+      finalCategory: existing.finalCategory || finalCategory(existing.percent || 0),
+      answers: existing.answers || []
+    };
+    renderFinish();
+    return;
+  }
+
+  if(existing && (existing.answered || 0) > 0){
+    currentStudent = {
+      className: existing.className || cls,
+      name: existing.name || name,
+      originalCategory: existing.originalCategory || originalCategory,
+      answered: existing.answered || 0,
+      correct: existing.correct || 0,
+      percent: existing.percent || 0,
+      completed: false,
+      answers: existing.answers || []
+    };
+    currentQuestionIndex = Math.min(currentStudent.answered, QUESTIONS.length - 1);
+    selectedAnswer = null;
+    alert(`Welcome back, ${name}. You will continue at Question ${currentQuestionIndex + 1}.`);
+    showScreen('studentQuestionScreen');
+    renderQuestion();
+    return;
+  }
+
   currentStudent = { className:cls, name, originalCategory, answered:0, correct:0, percent:0, completed:false, answers:[] };
   currentQuestionIndex = 0;
   selectedAnswer = null;
@@ -759,14 +811,21 @@ function renderVisual(type){
   }
 }
 function dotPatternSvg(){
-  const dots = (cx,cy,n)=>Array.from({length:n},(_,i)=>`<circle cx="${cx+i*24}" cy="${cy}" r="8" fill="#2563eb"/>`).join('');
+  const dot = (x,y,fill='#2563eb') => `<circle cx="${x}" cy="${y}" r="8" fill="${fill}"/>`;
+  const group = (x,y,rows) => rows.map((n,r)=>Array.from({length:n},(_,i)=>dot(x+i*24,y+r*34)).join('')).join('');
   return `<svg viewBox="0 0 620 210" role="img" aria-label="Dot pattern levels 1 to 3">
     <text x="95" y="28" text-anchor="middle" font-size="24" font-weight="900" fill="#0b2447">Level 1</text>
     <text x="310" y="28" text-anchor="middle" font-size="24" font-weight="900" fill="#0b2447">Level 2</text>
     <text x="525" y="28" text-anchor="middle" font-size="24" font-weight="900" fill="#0b2447">Level 3</text>
-    ${dots(67,80,3)}
-    ${dots(274,66,3)} ${dots(262,104,4)}
-    ${dots(489,52,3)} ${dots(477,90,4)} ${dots(465,128,5)}
+
+    <!-- Level 1: 3 dots -->
+    ${group(64,90,[3])}
+
+    <!-- Level 2: 7 dots -->
+    ${group(268,72,[3,4])}
+
+    <!-- Level 3: 11 dots -->
+    ${group(474,54,[3,4,4])}
   </svg>`;
 }
 function coordinateSvg(points){
