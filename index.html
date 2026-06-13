@@ -212,6 +212,35 @@
     .final-title p{font-size:20px;color:var(--muted); margin-top:8px}
     .final-student{font-size:20px; font-weight:1000; padding:12px 14px; border-radius:15px; background:rgba(255,255,255,.12); border:1px solid var(--line); margin-bottom:9px; display:flex; justify-content:space-between; gap:8px}
     .notice{margin-top:14px; color:#dceaff; background:rgba(255,255,255,.08); padding:12px 14px; border-radius:16px; border:1px solid var(--line); font-weight:750}
+
+
+    .teacher-gate-box{display:none; margin:20px auto 0; max-width:620px; padding:18px; border-radius:22px; background:rgba(255,255,255,.10); border:1px solid var(--line); box-shadow:0 16px 34px rgba(0,0,0,.18)}
+    .teacher-gate-box.active{display:block}
+    .teacher-gate-box label{display:block; font-size:15px; color:var(--muted); font-weight:1000; margin-bottom:8px; text-transform:uppercase; letter-spacing:.8px}
+    .teacher-gate-row{display:flex; gap:12px; align-items:center}
+    .teacher-gate-row input{flex:1; border-radius:16px; border:2px solid var(--line); background:rgba(255,255,255,.12); color:#fff; padding:14px; font-size:18px; font-weight:900; outline:none}
+    .teacher-gate-message{margin-top:10px; color:#ffb4b4; font-weight:900; min-height:20px}
+
+    .report-overlay{position:fixed; inset:0; background:rgba(0,0,0,.72); backdrop-filter:blur(8px); z-index:9999; display:none; align-items:center; justify-content:center; padding:24px}
+    .report-overlay.active{display:flex}
+    .report-panel{width:min(1180px,96vw); max-height:90vh; overflow:auto; background:#0f2342; border:1px solid var(--line); border-radius:28px; padding:24px; box-shadow:0 24px 70px rgba(0,0,0,.45)}
+    .report-top{display:flex; justify-content:space-between; align-items:flex-start; gap:14px; margin-bottom:18px}
+    .report-top h2{font-size:34px; margin-bottom:6px}
+    .report-top p{color:var(--muted); font-weight:800}
+    .report-summary{display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:16px}
+    .report-stat{border:1px solid var(--line); border-radius:16px; padding:12px; background:rgba(255,255,255,.08); font-weight:900}
+    .report-stat div:first-child{color:var(--muted); font-size:13px; margin-bottom:5px}
+    .report-stat div:last-child{font-size:22px}
+    .wrong-list{margin:12px 0 16px; padding:12px 14px; border-radius:16px; background:rgba(255,255,255,.08); border:1px solid var(--line); font-weight:900; color:#f8fbff}
+    .report-table{width:100%; border-collapse:collapse; background:rgba(255,255,255,.06); border-radius:16px; overflow:hidden; font-size:15px}
+    .report-table th,.report-table td{border-bottom:1px solid rgba(255,255,255,.12); padding:10px; text-align:left; vertical-align:top}
+    .report-table th{background:rgba(255,255,255,.12); color:#fff; font-weight:1000}
+    .result-ok{color:#7dffbd; font-weight:1000}
+    .result-bad{color:#ff9c9c; font-weight:1000}
+    .result-missing{color:#ffd166; font-weight:1000}
+    .view-report-btn{margin-top:10px; width:100%; padding:9px 11px; border-radius:12px; border:1px solid rgba(255,255,255,.22); background:rgba(107,183,255,.18); color:#eaf5ff; font-weight:1000; cursor:pointer}
+    .view-report-btn:hover{background:rgba(107,183,255,.30)}
+
     .footer-copy{position:absolute; left:28px; bottom:12px; color:rgba(255,255,255,.50); font-size:12px; font-weight:700}
 
     svg{max-width:100%; height:auto}
@@ -248,6 +277,15 @@
             <h2>Teacher View</h2>
             <p>Project the live dashboard. It shows names, progress, percentage scores, and final grouping.</p>
           </div>
+        </div>
+
+        <div id="teacherGateBox" class="teacher-gate-box">
+          <label for="teacherPasscodeInput">Teacher Passcode</label>
+          <div class="teacher-gate-row">
+            <input id="teacherPasscodeInput" type="password" placeholder="Enter code" onkeydown="if(event.key==='Enter') submitTeacherGate()" />
+            <button class="btn primary" onclick="submitTeacherGate()">Enter Teacher Dashboard</button>
+          </div>
+          <div id="teacherGateMessage" class="teacher-gate-message"></div>
         </div>
         <p class="notice">Final grouping rule: 90% and above → Gold, 70% to 89% → Silver, below 70% → Bronze.</p>
       </div>
@@ -314,7 +352,11 @@
           <div id="choicesBox"></div>
           <div class="student-footer">
             <div class="mini-score" id="answerReminder">Select one answer.</div>
-            <button class="btn primary" id="submitAnswerBtn" onclick="submitAnswer()">Submit Answer</button>
+            <div class="btn-row" style="justify-content:flex-end">
+              <button class="btn secondary" id="prevQuestionBtn" onclick="goToPreviousQuestion()">← Previous</button>
+              <button class="btn secondary" id="nextQuestionBtn" onclick="goToNextQuestion()">Next →</button>
+              <button class="btn primary" id="submitAnswerBtn" onclick="submitAnswer()">Submit Answer</button>
+            </div>
           </div>
         </div>
       </div>
@@ -386,6 +428,21 @@
       </div>
     </div>
   </section>
+</div>
+
+<div id="answerReportOverlay" class="report-overlay">
+  <div class="report-panel">
+    <div class="report-top">
+      <div>
+        <h2 id="reportStudentName">Student Answer Report</h2>
+        <p id="reportStudentInfo"></p>
+      </div>
+      <button class="btn secondary" onclick="closeAnswerReport()">Close</button>
+    </div>
+    <div id="reportSummary" class="report-summary"></div>
+    <div id="reportWrongList" class="wrong-list"></div>
+    <div id="reportTableBox"></div>
+  </div>
 </div>
 
 <script>
@@ -463,6 +520,7 @@ let currentStudent = null;
 let currentTeacherClass = "Grade 6A";
 let unsubscribeTeacher = null;
 let localResults = {};
+let latestTeacherRows = [];
 const TEST_ID = "grade6_math_league_final";
 
 function isConfigReady(){ return firebaseConfig.apiKey && !firebaseConfig.apiKey.includes("PASTE_"); }
@@ -528,6 +586,50 @@ async function getExistingStudentRecord(cls, name){
   }
 }
 
+
+function getAnswerEntry(questionIndex){
+  return (currentStudent && currentStudent.answers ? currentStudent.answers : []).find(a => a.question === questionIndex + 1) || null;
+}
+
+function normalizeAndRecalculateStudent(){
+  if(!currentStudent) return;
+  const byQuestion = new Map();
+  (currentStudent.answers || []).forEach(a => {
+    if(!a || typeof a.question !== 'number') return;
+    if(a.question < 1 || a.question > QUESTIONS.length) return;
+    byQuestion.set(a.question, a);
+  });
+  currentStudent.answers = Array.from(byQuestion.values()).sort((a,b)=>a.question-b.question);
+  currentStudent.answered = currentStudent.answers.length;
+  currentStudent.correct = currentStudent.answers.filter(a => a.isCorrect).length;
+  currentStudent.percent = currentStudent.answered ? Math.round((currentStudent.correct / currentStudent.answered) * 100) : 0;
+}
+
+function firstUnansweredIndex(){
+  const answeredSet = new Set((currentStudent && currentStudent.answers ? currentStudent.answers : []).map(a => a.question));
+  for(let i=0; i<QUESTIONS.length; i++){
+    if(!answeredSet.has(i+1)) return i;
+  }
+  return QUESTIONS.length;
+}
+
+function highestAccessibleIndex(){
+  return Math.min(firstUnansweredIndex(), QUESTIONS.length - 1);
+}
+
+function goToPreviousQuestion(){
+  if(currentQuestionIndex <= 0) return;
+  currentQuestionIndex -= 1;
+  renderQuestion();
+}
+
+function goToNextQuestion(){
+  const maxIndex = highestAccessibleIndex();
+  if(currentQuestionIndex >= maxIndex) return;
+  currentQuestionIndex += 1;
+  renderQuestion();
+}
+
 async function startStudentTest(){
   const cls = document.getElementById('classSelect').value;
   const originalCategory = document.getElementById('leagueSelect').value;
@@ -563,7 +665,8 @@ async function startStudentTest(){
       completed: false,
       answers: existing.answers || []
     };
-    currentQuestionIndex = Math.min(currentStudent.answered, QUESTIONS.length - 1);
+    normalizeAndRecalculateStudent();
+    currentQuestionIndex = Math.min(firstUnansweredIndex(), QUESTIONS.length - 1);
     selectedAnswer = null;
     alert(`Welcome back, ${name}. You will continue at Question ${currentQuestionIndex + 1}.`);
     showScreen('studentQuestionScreen');
@@ -582,10 +685,13 @@ async function startStudentTest(){
 function renderQuestion(){
   const q = QUESTIONS[currentQuestionIndex];
   const total = QUESTIONS.length;
+  normalizeAndRecalculateStudent();
+  const existingAnswer = getAnswerEntry(currentQuestionIndex);
+
   document.getElementById('studentHeaderName').textContent = currentStudent.name;
   document.getElementById('studentHeaderInfo').textContent = `${currentStudent.className} • Started in ${currentStudent.originalCategory}`;
-  document.getElementById('progressText').textContent = `Question ${currentQuestionIndex+1} / ${total}`;
-  document.getElementById('progressFill').style.width = `${(currentQuestionIndex/total)*100}%`;
+  document.getElementById('progressText').textContent = `Question ${currentQuestionIndex+1} / ${total} • Answered ${currentStudent.answered}/${total}`;
+  document.getElementById('progressFill').style.width = `${(currentStudent.answered/total)*100}%`;
   document.getElementById('topicPill').textContent = q.topic;
   document.getElementById('questionTitle').textContent = q.title;
   document.getElementById('questionBody').innerHTML = q.body;
@@ -598,11 +704,21 @@ function renderQuestion(){
     visualBox.innerHTML = '';
   }
   document.getElementById('studentLiveScore').textContent = `Score: ${currentStudent.correct}/${currentStudent.answered}`;
-  document.getElementById('answerReminder').textContent = 'Select one answer.';
-  selectedAnswer = null;
-  const choices = q.choices.map((choice,idx)=>`<button class="choice" id="choice${idx}" onclick="selectChoice(${idx})">${String.fromCharCode(65+idx)}) ${choice}</button>`).join('');
+
+  selectedAnswer = existingAnswer ? existingAnswer.selected : null;
+  const choices = q.choices.map((choice,idx)=>`<button class="choice ${selectedAnswer===idx?'selected':''}" id="choice${idx}" onclick="selectChoice(${idx})">${String.fromCharCode(65+idx)}) ${choice}</button>`).join('');
   document.getElementById('choicesBox').innerHTML = choices;
-  document.getElementById('submitAnswerBtn').textContent = currentQuestionIndex === total-1 ? 'Submit Final Answer' : 'Submit Answer';
+
+  const reminder = document.getElementById('answerReminder');
+  if(existingAnswer){
+    reminder.textContent = 'You already answered this question. You may change your answer before finishing.';
+  } else {
+    reminder.textContent = 'Select one answer.';
+  }
+
+  document.getElementById('prevQuestionBtn').disabled = currentQuestionIndex === 0;
+  document.getElementById('nextQuestionBtn').disabled = currentQuestionIndex >= highestAccessibleIndex();
+  document.getElementById('submitAnswerBtn').textContent = existingAnswer ? 'Update Answer' : (currentQuestionIndex === total-1 ? 'Submit Final Answer' : 'Submit Answer');
 }
 function selectChoice(idx){
   selectedAnswer = idx;
@@ -614,11 +730,19 @@ async function submitAnswer(){
   if(selectedAnswer === null){ alert('Please choose an answer first.'); return; }
   const q = QUESTIONS[currentQuestionIndex];
   const isCorrect = selectedAnswer === q.answer;
-  currentStudent.answered += 1;
-  if(isCorrect) currentStudent.correct += 1;
-  currentStudent.percent = Math.round((currentStudent.correct / currentStudent.answered) * 100);
-  currentStudent.answers.push({question:currentQuestionIndex+1, selected:selectedAnswer, correct:q.answer, isCorrect});
-  if(currentQuestionIndex >= QUESTIONS.length-1){
+  const questionNumber = currentQuestionIndex + 1;
+  const existingIndex = (currentStudent.answers || []).findIndex(a => a.question === questionNumber);
+  const answerRecord = {question:questionNumber, selected:selectedAnswer, correct:q.answer, isCorrect};
+
+  if(existingIndex >= 0){
+    currentStudent.answers[existingIndex] = answerRecord;
+  } else {
+    currentStudent.answers.push(answerRecord);
+  }
+
+  normalizeAndRecalculateStudent();
+
+  if(currentStudent.answered >= QUESTIONS.length){
     currentStudent.completed = true;
     currentStudent.percent = Math.round((currentStudent.correct / QUESTIONS.length) * 100);
     currentStudent.finalCategory = finalCategory(currentStudent.percent);
@@ -626,8 +750,10 @@ async function submitAnswer(){
     await saveStudentProgress();
     renderFinish();
   } else {
+    currentStudent.completed = false;
+    currentStudent.finalCategory = null;
     await saveStudentProgress();
-    currentQuestionIndex += 1;
+    currentQuestionIndex = Math.min(firstUnansweredIndex(), QUESTIONS.length - 1);
     renderQuestion();
   }
 }
@@ -642,6 +768,11 @@ function renderFinish(){
 }
 
 async function saveStudentProgress(){
+  normalizeAndRecalculateStudent();
+  if(currentStudent.completed){
+    currentStudent.percent = Math.round((currentStudent.correct / QUESTIONS.length) * 100);
+    currentStudent.finalCategory = finalCategory(currentStudent.percent);
+  }
   const record = {
     testId: TEST_ID,
     className: currentStudent.className,
@@ -669,11 +800,22 @@ async function saveStudentProgress(){
 *************************************************************/
 const TEACHER_PASSCODE = "DELTA2026";
 function showTeacherGate(){
-  const code = prompt("Enter teacher passcode:");
+  const box = document.getElementById('teacherGateBox');
+  const msg = document.getElementById('teacherGateMessage');
+  const input = document.getElementById('teacherPasscodeInput');
+  if(box){ box.classList.add('active'); }
+  if(msg){ msg.textContent = ''; }
+  if(input){ input.value = ''; setTimeout(()=>input.focus(), 50); }
+}
+function submitTeacherGate(){
+  const input = document.getElementById('teacherPasscodeInput');
+  const msg = document.getElementById('teacherGateMessage');
+  const code = input ? input.value.trim() : '';
   if(code === TEACHER_PASSCODE){
+    if(msg){ msg.textContent = ''; }
     showTeacher();
-  } else if(code !== null){
-    alert("Incorrect passcode. Teacher View is locked.");
+  } else {
+    if(msg){ msg.textContent = 'Incorrect passcode. Please try again.'; }
   }
 }
 function showTeacher(){
@@ -715,8 +857,9 @@ function renderTeacher(data){
   const roster = getRosterRows(currentTeacherClass);
   const rows = roster.map(r=>{
     const rec = data[studentDocId(currentTeacherClass,r.name)];
-    return rec || {className:currentTeacherClass, name:r.name, originalCategory:r.originalCategory, answered:0, correct:0, total:QUESTIONS.length, percent:0, completed:false, finalCategory:null};
+    return rec || {className:currentTeacherClass, name:r.name, originalCategory:r.originalCategory, answered:0, correct:0, total:QUESTIONS.length, percent:0, completed:false, finalCategory:null, answers:[]};
   });
+  latestTeacherRows = rows;
   const finished = rows.filter(r=>r.completed).length;
   const active = rows.filter(r=>r.answered>0);
   const avg = active.length ? Math.round(active.reduce((s,r)=>s+(r.percent||0),0)/active.length) : 0;
@@ -746,11 +889,13 @@ function studentRowHtml(r){
   const statusClass = r.completed ? 'finished' : 'working';
   const statusText = r.completed ? 'Finished' : (r.answered>0 ? 'Working' : 'Waiting');
   const progressPct = Math.round(((r.answered||0)/(r.total||QUESTIONS.length))*100);
+  const rowId = studentDocId(currentTeacherClass, r.name);
   return `<div class="student-row">
     <div class="student-row-top"><div class="student-name">${r.name}</div><div class="status ${statusClass}">${statusText}</div></div>
     <div class="row-details"><div>Progress: <b>${r.answered||0}/${r.total||QUESTIONS.length}</b></div><div>Correct: <b>${r.correct||0}</b></div></div>
     <div class="score-line">${r.percent||0}%</div>
     <div class="tinybar"><span style="width:${progressPct}%"></span></div>
+    <button class="view-report-btn" onclick="openAnswerReport('${rowId}')">View Answers</button>
   </div>`;
 }
 function renderFinalGroups(rows){
@@ -765,6 +910,53 @@ function renderFinalGroups(rows){
     el.innerHTML = groups[league].length ? groups[league].sort((a,b)=>(b.percent||0)-(a.percent||0)).map(r=>`<div class="final-student"><span>${r.name}</span><span>${r.percent||0}%</span></div>`).join('') : '<div class="empty">No students</div>';
   }
 }
+
+function escapeHtml(value){
+  return String(value ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+}
+function answerText(questionIndex, choiceIndex){
+  if(!Number.isInteger(choiceIndex)) return '—';
+  const q = QUESTIONS[questionIndex];
+  if(!q || !q.choices || !q.choices[choiceIndex]) return '—';
+  return `${String.fromCharCode(65 + choiceIndex)}) ${q.choices[choiceIndex]}`;
+}
+function openAnswerReport(rowId){
+  const r = latestTeacherRows.find(row => studentDocId(currentTeacherClass, row.name) === rowId);
+  if(!r){ alert('No report data found for this student yet.'); return; }
+  const percent = r.percent || 0;
+  const finalCat = r.completed ? (r.finalCategory || finalCategory(percent)) : 'Not finished';
+  const answers = Array.isArray(r.answers) ? r.answers : [];
+  const wrongNumbers = [];
+  const bodyRows = QUESTIONS.map((q, index)=>{
+    const entry = answers.find(a => (a.question === index + 1) || (a.questionIndex === index));
+    const selected = entry ? entry.selected : null;
+    const isAnswered = entry && Number.isInteger(selected);
+    const ok = isAnswered && selected === q.answer;
+    if(isAnswered && !ok) wrongNumbers.push(index + 1);
+    const resultText = !isAnswered ? '<span class="result-missing">Not answered</span>' : (ok ? '<span class="result-ok">Correct</span>' : '<span class="result-bad">Wrong</span>');
+    return `<tr>
+      <td>${index + 1}</td>
+      <td>${escapeHtml(q.topic || '')}</td>
+      <td>${escapeHtml(answerText(index, selected))}</td>
+      <td>${escapeHtml(answerText(index, q.answer))}</td>
+      <td>${resultText}</td>
+    </tr>`;
+  }).join('');
+  document.getElementById('reportStudentName').textContent = `${r.name} — Answer Report`;
+  document.getElementById('reportStudentInfo').textContent = `${r.className || currentTeacherClass} • Started in ${r.originalCategory || '—'} • Status: ${r.completed ? 'Finished' : (r.answered>0 ? 'Working' : 'Waiting')}`;
+  document.getElementById('reportSummary').innerHTML = `
+    <div class="report-stat"><div>Score</div><div>${r.correct||0}/${QUESTIONS.length}</div></div>
+    <div class="report-stat"><div>Percent</div><div>${percent}%</div></div>
+    <div class="report-stat"><div>Progress</div><div>${r.answered||0}/${QUESTIONS.length}</div></div>
+    <div class="report-stat"><div>Final Group</div><div>${finalCat}</div></div>`;
+  document.getElementById('reportWrongList').textContent = wrongNumbers.length ? `Wrong answers: Q${wrongNumbers.join(', Q')}` : (r.answered>0 ? 'No wrong answers so far.' : 'No answers submitted yet.');
+  document.getElementById('reportTableBox').innerHTML = `<table class="report-table"><thead><tr><th>Q</th><th>Topic</th><th>Student Answer</th><th>Correct Answer</th><th>Result</th></tr></thead><tbody>${bodyRows}</tbody></table>`;
+  document.getElementById('answerReportOverlay').classList.add('active');
+}
+function closeAnswerReport(){
+  document.getElementById('answerReportOverlay').classList.remove('active');
+}
+
 async function resetSelectedClass(){
   if(!confirm(`Reset all results for ${currentTeacherClass}? This clears scores for this class only.`)) return;
   const roster = getRosterRows(currentTeacherClass);
